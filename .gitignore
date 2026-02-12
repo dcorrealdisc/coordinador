@@ -1,0 +1,81 @@
+# General
+.DS_Store
+*.log
+*.tmp
+.env
+.env.local
+.env.*.local
+
+# Go
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Air (hot reload)
+tmp/
+
+# Node.js / Frontend
+node_modules/
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# SvelteKit
+.svelte-kit/
+build/
+.vercel/
+.output/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.iml
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Docker
+docker-compose.override.yml
+
+# Temporary files
+*.bak
+*.backup
+temp/
+tmp/

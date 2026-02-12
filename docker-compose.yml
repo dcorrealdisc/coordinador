@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: coordinador_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: coordinador
+      POSTGRES_PASSWORD: coordinador_dev_2024
+      POSTGRES_DB: coordinador_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coordinador"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Backend (desarrollo)
+  # Descomentar cuando el backend esté listo para containerizar
+  # api:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile.dev
+  #   container_name: coordinador_api
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USER: coordinador
+  #     DB_PASSWORD: coordinador_dev_2024
+  #     DB_NAME: coordinador_db
+  #     DB_SSLMODE: disable
+  #     ENV: development
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./backend:/app
+  #     - /app/bin
+
+  # Admin Web (desarrollo)
+  # Descomentar cuando esté configurado
+  # admin-web:
+  #   build:
+  #     context: ./admin-web
+  #     dockerfile: Dockerfile.dev
+  #   container_name: coordinador_admin_web
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     VITE_API_URL: http://localhost:8080/api/v1
+  #   volumes:
+  #     - ./admin-web:/app
+  #     - /app/node_modules
+
+  # Portal Web (desarrollo)
+  # Descomentar cuando esté configurado
+  # portal-web:
+  #   build:
+  #     context: ./portal-web
+  #     dockerfile: Dockerfile.dev
+  #   container_name: coordinador_portal_web
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     VITE_API_URL: http://localhost:8080/api/v1
+  #   volumes:
+  #     - ./portal-web:/app
+  #     - /app/node_modules
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: coordinador_network
