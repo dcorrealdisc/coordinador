@@ -11,6 +11,7 @@ Un ADR (Architectural Decision Record) es un documento que captura una decisión
 | ID | Título | Estado | Fecha | Agente |
 |----|--------|--------|-------|--------|
 | [001](./001-arquitectura-general.md) | Arquitectura General del Sistema | Aceptado | 2026-02-12 | Arquitecto |
+| [002](./002-diseno-base-datos.md) | Diseño de Base de Datos y Estrategia de Datos | Aceptado | 2026-02-13 | DBA |
 
 ## Estados Posibles
 
@@ -40,7 +41,7 @@ Un ADR (Architectural Decision Record) es un documento que captura una decisión
 - [ADR-001](./001-arquitectura-general.md): Arquitectura General del Sistema
 
 ### Base de Datos
-_Pendiente_
+- [ADR-002](./002-diseno-base-datos.md): Diseño de Base de Datos y Estrategia de Datos
 
 ### Frontend
 _Pendiente_

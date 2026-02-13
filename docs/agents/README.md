@@ -16,7 +16,7 @@ Los agentes son asistentes de IA especializados en dominios específicos del pro
 | Agente | Estado | Responsabilidades Principales | Guía |
 |--------|--------|-------------------------------|------|
 | Arquitecto | ✅ Activo | Decisiones arquitectónicas, ADRs, coherencia del sistema | [Ver guía](./agente-arquitecto.md) |
-| DBA | 📝 Pendiente | Diseño de base de datos, optimizaciones, migraciones | _Próximamente_ |
+| DBA | ✅ Activo | Diseño de base de datos, optimizaciones, migraciones | [Ver guía](./agente-dba.md) |
 | Go/Backend | 📝 Pendiente | Implementación backend, APIs, lógica de negocio | _Próximamente_ |
 | Svelte | 📝 Pendiente | Desarrollo frontend, componentes, UX | _Próximamente_ |
 | DevOps | 📝 Pendiente | CI/CD, containerización, deployment | _Próximamente_ |
