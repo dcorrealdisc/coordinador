@@ -164,7 +164,7 @@
 								{/if}
 							</td>
 							<td class="px-6 py-4 text-sm text-gray-600">
-								{student.emails[0]}
+								{student.emails?.[0] ?? '—'}
 							</td>
 							<td class="px-6 py-4 text-sm text-gray-600">
 								{student.cohort}
