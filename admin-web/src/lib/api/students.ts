@@ -4,7 +4,8 @@ import type {
 	CreateStudentRequest,
 	UpdateStudentRequest,
 	PaginatedData,
-	StudentFilters
+	StudentFilters,
+	ImportResult
 } from './types';
 
 export async function getStudents(filters?: StudentFilters): Promise<PaginatedData<Student>> {
@@ -33,4 +34,14 @@ export async function updateStudent(id: string, data: UpdateStudentRequest): Pro
 
 export async function deleteStudent(id: string): Promise<void> {
 	await apiCall<void>(api.delete(`/students/${id}`));
+}
+
+export async function importStudents(file: File): Promise<ImportResult> {
+	const formData = new FormData();
+	formData.append('file', file);
+	return apiCall<ImportResult>(
+		api.post('/students/import', formData, {
+			headers: { 'Content-Type': 'multipart/form-data' }
+		})
+	);
 }

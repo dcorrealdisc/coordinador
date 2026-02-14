@@ -75,6 +75,19 @@ export interface UpdateStudentRequest {
 	status?: string;
 }
 
+export interface ImportRowError {
+	row: number;
+	field: string;
+	value: string;
+	message: string;
+}
+
+export interface ImportResult {
+	total_rows: number;
+	created: number;
+	errors: ImportRowError[];
+}
+
 export interface StudentFilters {
 	status?: string;
 	cohort?: string;

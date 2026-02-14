@@ -80,12 +80,20 @@
 				{/if}
 			</p>
 		</div>
-		<a
-			href="/students/new"
-			class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-		>
-			+ Nuevo Estudiante
-		</a>
+		<div class="flex gap-3">
+			<a
+				href="/students/import"
+				class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+			>
+				Importar
+			</a>
+			<a
+				href="/students/new"
+				class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+			>
+				+ Nuevo Estudiante
+			</a>
+		</div>
 	</div>
 
 	<!-- Filters -->
