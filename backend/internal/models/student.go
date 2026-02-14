@@ -16,10 +16,11 @@ const (
 	StudentStatusSuspended StudentStatus = "suspended"
 )
 
-// Student maps to the students table defined in migration 003.
+// Student maps to the students table.
 type Student struct {
 	ID              uuid.UUID     `json:"id" db:"id"`
-	FullName        string        `json:"full_name" db:"full_name"`
+	FirstNames      string        `json:"first_names" db:"first_names"`
+	LastNames       string        `json:"last_names" db:"last_names"`
 	DocumentID      *string       `json:"document_id,omitempty" db:"document_id"`
 	BirthDate       time.Time     `json:"birth_date" db:"birth_date"`
 	ProfilePhotoURL *string       `json:"profile_photo_url,omitempty" db:"profile_photo_url"`
@@ -34,7 +35,9 @@ type Student struct {
 	Phones []string `json:"phones" db:"phones"`
 
 	// Laboral
-	CompanyID *uuid.UUID `json:"company_id,omitempty" db:"company_id"`
+	CompanyID          *uuid.UUID `json:"company_id,omitempty" db:"company_id"`
+	JobTitleCategoryID *uuid.UUID `json:"job_title_category_id,omitempty" db:"job_title_category_id"`
+	ProfessionID       *uuid.UUID `json:"profession_id,omitempty" db:"profession_id"`
 
 	// Estado academico
 	StudentCode    *string       `json:"student_code,omitempty" db:"student_code"`
@@ -54,30 +57,36 @@ type Student struct {
 
 // CreateStudentRequest is the DTO for creating a student.
 type CreateStudentRequest struct {
-	FullName        string   `json:"full_name" validate:"required,min=3,max=255"`
-	DocumentID      *string  `json:"document_id" validate:"omitempty,max=50"`
-	BirthDate       string   `json:"birth_date" validate:"required"`
-	ProfilePhotoURL *string  `json:"profile_photo_url" validate:"omitempty,url"`
-	NationalityCountryID string  `json:"nationality_country_id" validate:"required,uuid"`
-	ResidenceCountryID   string  `json:"residence_country_id" validate:"required,uuid"`
-	ResidenceCityID      *string `json:"residence_city_id" validate:"omitempty,uuid"`
-	Emails          []string `json:"emails" validate:"required,min=1,dive,email"`
-	Phones          []string `json:"phones" validate:"omitempty,dive,max=50"`
-	CompanyID       *string  `json:"company_id" validate:"omitempty,uuid"`
-	StudentCode     *string  `json:"student_code" validate:"omitempty,len=9"`
-	Status          string   `json:"status" validate:"required,oneof=active graduated withdrawn suspended"`
-	Cohort          string   `json:"cohort" validate:"required,max=10"`
-	EnrollmentDate  string   `json:"enrollment_date" validate:"required"`
+	FirstNames           string   `json:"first_names" validate:"required,min=2,max=150"`
+	LastNames            string   `json:"last_names" validate:"required,min=2,max=150"`
+	DocumentID           *string  `json:"document_id" validate:"omitempty,max=50"`
+	BirthDate            string   `json:"birth_date" validate:"required"`
+	ProfilePhotoURL      *string  `json:"profile_photo_url" validate:"omitempty,url"`
+	NationalityCountryID string   `json:"nationality_country_id" validate:"required,uuid"`
+	ResidenceCountryID   string   `json:"residence_country_id" validate:"required,uuid"`
+	ResidenceCityID      *string  `json:"residence_city_id" validate:"omitempty,uuid"`
+	Emails               []string `json:"emails" validate:"required,min=1,dive,email"`
+	Phones               []string `json:"phones" validate:"omitempty,dive,max=50"`
+	CompanyID            *string  `json:"company_id" validate:"omitempty,uuid"`
+	JobTitleCategoryID   *string  `json:"job_title_category_id" validate:"omitempty,uuid"`
+	ProfessionID         *string  `json:"profession_id" validate:"omitempty,uuid"`
+	StudentCode          *string  `json:"student_code" validate:"omitempty,len=9"`
+	Status               string   `json:"status" validate:"required,oneof=active graduated withdrawn suspended"`
+	Cohort               string   `json:"cohort" validate:"required,max=10"`
+	EnrollmentDate       string   `json:"enrollment_date" validate:"required"`
 }
 
 // UpdateStudentRequest is the DTO for updating a student. All fields are optional.
 type UpdateStudentRequest struct {
-	FullName        *string  `json:"full_name" validate:"omitempty,min=3,max=255"`
-	DocumentID      *string  `json:"document_id" validate:"omitempty,max=50"`
-	ProfilePhotoURL *string  `json:"profile_photo_url" validate:"omitempty,url"`
-	Emails          []string `json:"emails" validate:"omitempty,min=1,dive,email"`
-	Phones          []string `json:"phones" validate:"omitempty"`
-	CompanyID       *string  `json:"company_id" validate:"omitempty,uuid"`
-	StudentCode     *string  `json:"student_code" validate:"omitempty,len=9"`
-	Status          *string  `json:"status" validate:"omitempty,oneof=active graduated withdrawn suspended"`
+	FirstNames         *string  `json:"first_names" validate:"omitempty,min=2,max=150"`
+	LastNames          *string  `json:"last_names" validate:"omitempty,min=2,max=150"`
+	DocumentID         *string  `json:"document_id" validate:"omitempty,max=50"`
+	ProfilePhotoURL    *string  `json:"profile_photo_url" validate:"omitempty,url"`
+	Emails             []string `json:"emails" validate:"omitempty,min=1,dive,email"`
+	Phones             []string `json:"phones" validate:"omitempty"`
+	CompanyID          *string  `json:"company_id" validate:"omitempty,uuid"`
+	JobTitleCategoryID *string  `json:"job_title_category_id" validate:"omitempty,uuid"`
+	ProfessionID       *string  `json:"profession_id" validate:"omitempty,uuid"`
+	StudentCode        *string  `json:"student_code" validate:"omitempty,len=9"`
+	Status             *string  `json:"status" validate:"omitempty,oneof=active graduated withdrawn suspended"`
 }

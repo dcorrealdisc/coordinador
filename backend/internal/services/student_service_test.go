@@ -18,7 +18,8 @@ import (
 
 func validCreateRequest() *models.CreateStudentRequest {
 	return &models.CreateStudentRequest{
-		FullName:             "Juan Carlos Perez",
+		FirstNames:           "Juan Carlos",
+		LastNames:            "Perez",
 		BirthDate:            "1995-03-15",
 		NationalityCountryID: uuid.New().String(),
 		ResidenceCountryID:   uuid.New().String(),
@@ -32,7 +33,8 @@ func validCreateRequest() *models.CreateStudentRequest {
 func sampleStudent() *models.Student {
 	return &models.Student{
 		ID:                   uuid.New(),
-		FullName:             "Juan Carlos Perez",
+		FirstNames:           "Juan Carlos",
+		LastNames:            "Perez",
 		BirthDate:            time.Date(1995, 3, 15, 0, 0, 0, 0, time.UTC),
 		NationalityCountryID: uuid.New(),
 		ResidenceCountryID:   uuid.New(),
@@ -60,7 +62,8 @@ func TestCreateStudent_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, student)
-	assert.Equal(t, "Juan Carlos Perez", student.FullName)
+	assert.Equal(t, "Juan Carlos", student.FirstNames)
+	assert.Equal(t, "Perez", student.LastNames)
 	assert.Equal(t, models.StudentStatusActive, student.Status)
 	assert.Equal(t, "2024-1", student.Cohort)
 	assert.NotEqual(t, uuid.Nil, student.ID)
@@ -244,7 +247,7 @@ func TestGetStudent_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected.ID, student.ID)
-	assert.Equal(t, expected.FullName, student.FullName)
+	assert.Equal(t, expected.FirstNames, student.FirstNames)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -325,9 +328,9 @@ func TestUpdateStudent_Success(t *testing.T) {
 	service := services.NewStudentService(mockRepo)
 
 	existing := sampleStudent()
-	newName := "Juan Actualizado"
+	newFirstNames := "Juan Actualizado"
 	req := &models.UpdateStudentRequest{
-		FullName: &newName,
+		FirstNames: &newFirstNames,
 	}
 
 	mockRepo.On("GetByID", mock.Anything, existing.ID).Return(existing, nil)
@@ -336,7 +339,7 @@ func TestUpdateStudent_Success(t *testing.T) {
 	student, err := service.UpdateStudent(context.Background(), existing.ID, req, nil)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "Juan Actualizado", student.FullName)
+	assert.Equal(t, "Juan Actualizado", student.FirstNames)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -346,7 +349,7 @@ func TestUpdateStudent_NotFound(t *testing.T) {
 
 	id := uuid.New()
 	newName := "Inexistente"
-	req := &models.UpdateStudentRequest{FullName: &newName}
+	req := &models.UpdateStudentRequest{FirstNames: &newName}
 
 	mockRepo.On("GetByID", mock.Anything, id).Return(nil, fmt.Errorf("student not found"))
 
@@ -433,8 +436,9 @@ func TestUpdateStudent_PartialFields(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, models.StudentStatus("graduated"), student.Status)
 	assert.Equal(t, []string{"new@email.com", "other@email.com"}, student.Emails)
-	// FullName should remain unchanged
-	assert.Equal(t, "Juan Carlos Perez", student.FullName)
+	// Names should remain unchanged
+	assert.Equal(t, "Juan Carlos", student.FirstNames)
+	assert.Equal(t, "Perez", student.LastNames)
 	mockRepo.AssertExpectations(t)
 }
 

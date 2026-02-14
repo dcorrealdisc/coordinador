@@ -85,6 +85,24 @@ func (s *studentService) CreateStudent(ctx context.Context, req *models.CreateSt
 		companyID = &parsed
 	}
 
+	var jobTitleCategoryID *uuid.UUID
+	if req.JobTitleCategoryID != nil {
+		parsed, err := uuid.Parse(*req.JobTitleCategoryID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid job_title_category_id: %w", err)
+		}
+		jobTitleCategoryID = &parsed
+	}
+
+	var professionID *uuid.UUID
+	if req.ProfessionID != nil {
+		parsed, err := uuid.Parse(*req.ProfessionID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid profession_id: %w", err)
+		}
+		professionID = &parsed
+	}
+
 	// Validate student_code format if provided
 	if req.StudentCode != nil {
 		if !studentCodeRegex.MatchString(*req.StudentCode) {
@@ -94,7 +112,8 @@ func (s *studentService) CreateStudent(ctx context.Context, req *models.CreateSt
 
 	student := &models.Student{
 		ID:                   uuid.New(),
-		FullName:             req.FullName,
+		FirstNames:           req.FirstNames,
+		LastNames:            req.LastNames,
 		DocumentID:           req.DocumentID,
 		BirthDate:            birthDate,
 		ProfilePhotoURL:      req.ProfilePhotoURL,
@@ -104,6 +123,8 @@ func (s *studentService) CreateStudent(ctx context.Context, req *models.CreateSt
 		Emails:               req.Emails,
 		Phones:               req.Phones,
 		CompanyID:            companyID,
+		JobTitleCategoryID:   jobTitleCategoryID,
+		ProfessionID:         professionID,
 		StudentCode:          req.StudentCode,
 		Status:               models.StudentStatus(req.Status),
 		Cohort:               req.Cohort,
@@ -143,8 +164,11 @@ func (s *studentService) UpdateStudent(ctx context.Context, id uuid.UUID, req *m
 	}
 
 	// Apply partial updates
-	if req.FullName != nil {
-		student.FullName = *req.FullName
+	if req.FirstNames != nil {
+		student.FirstNames = *req.FirstNames
+	}
+	if req.LastNames != nil {
+		student.LastNames = *req.LastNames
 	}
 	if req.DocumentID != nil {
 		student.DocumentID = req.DocumentID
@@ -167,6 +191,20 @@ func (s *studentService) UpdateStudent(ctx context.Context, id uuid.UUID, req *m
 			return nil, fmt.Errorf("invalid company_id: %w", err)
 		}
 		student.CompanyID = &parsed
+	}
+	if req.JobTitleCategoryID != nil {
+		parsed, err := uuid.Parse(*req.JobTitleCategoryID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid job_title_category_id: %w", err)
+		}
+		student.JobTitleCategoryID = &parsed
+	}
+	if req.ProfessionID != nil {
+		parsed, err := uuid.Parse(*req.ProfessionID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid profession_id: %w", err)
+		}
+		student.ProfessionID = &parsed
 	}
 	if req.StudentCode != nil {
 		if !studentCodeRegex.MatchString(*req.StudentCode) {

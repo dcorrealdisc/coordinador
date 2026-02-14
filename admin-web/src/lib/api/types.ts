@@ -14,7 +14,8 @@ export interface PaginatedData<T> {
 
 export interface Student {
 	id: string;
-	full_name: string;
+	first_names: string;
+	last_names: string;
 	document_id?: string;
 	birth_date: string;
 	profile_photo_url?: string;
@@ -24,6 +25,8 @@ export interface Student {
 	emails: string[];
 	phones?: string[];
 	company_id?: string;
+	job_title_category_id?: string;
+	profession_id?: string;
 	student_code?: string;
 	status: 'active' | 'graduated' | 'withdrawn' | 'suspended';
 	cohort: string;
@@ -36,7 +39,8 @@ export interface Student {
 }
 
 export interface CreateStudentRequest {
-	full_name: string;
+	first_names: string;
+	last_names: string;
 	document_id?: string;
 	birth_date: string;
 	profile_photo_url?: string;
@@ -46,6 +50,8 @@ export interface CreateStudentRequest {
 	emails: string[];
 	phones?: string[];
 	company_id?: string;
+	job_title_category_id?: string;
+	profession_id?: string;
 	student_code?: string;
 	status: string;
 	cohort: string;
@@ -53,12 +59,15 @@ export interface CreateStudentRequest {
 }
 
 export interface UpdateStudentRequest {
-	full_name?: string;
+	first_names?: string;
+	last_names?: string;
 	document_id?: string;
 	profile_photo_url?: string;
 	emails?: string[];
 	phones?: string[];
 	company_id?: string;
+	job_title_category_id?: string;
+	profession_id?: string;
 	student_code?: string;
 	status?: string;
 }

@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { createStudent } from '$lib/api/students';
 
-	let fullName = '';
+	let firstNames = '';
+	let lastNames = '';
 	let documentId = '';
 	let birthDate = '';
 	let email = '';
@@ -10,6 +11,9 @@
 	let nationalityCountryId = '';
 	let residenceCountryId = '';
 	let residenceCityId = '';
+	let companyId = '';
+	let jobTitleCategoryId = '';
+	let professionId = '';
 	let studentCode = '';
 	let status = 'active';
 	let cohort = '';
@@ -18,7 +22,7 @@
 	let saving = false;
 	let error = '';
 
-	// UUIDs reales de la tabla countries (hardcoded hasta que exista el API de catálogos)
+	// UUIDs reales de la tabla countries
 	const COUNTRIES: Record<string, string> = {
 		'f5f3d79f-6a18-4ccf-99a5-bae8d8d99b3d': 'Argentina',
 		'4af2b16d-04c7-4c2c-8918-7d036151367b': 'Bolivia',
@@ -36,12 +40,55 @@
 		'd80250ae-34bd-4bd9-af8a-0732c62b4b02': 'Venezuela',
 	};
 
+	// UUIDs reales de la tabla job_title_categories
+	const JOB_TITLE_CATEGORIES: Record<string, string> = {
+		'bd18e609-2d03-48a6-b03d-8a3a17a8e88a': 'Analista',
+		'98c706ed-0b4d-44c4-9fcd-3b5beb8796fc': 'Consultor/a',
+		'128f0bba-0787-4bcb-a57f-ea193e348e5a': 'Coordinador/a',
+		'7c31223f-d8c1-4920-849b-dbaf1f7adf00': 'Desarrollador/a',
+		'ab6ba022-4d05-44d5-915e-76c5c62aa4d3': 'Director/a',
+		'42b747f9-f52a-40ff-93f6-50360921f76f': 'Diseñador/a',
+		'88eaa761-180a-4b52-8868-1b742b743eb5': 'Docente',
+		'acdda65b-0fe6-4742-b5d0-ef8ba2f53242': 'Especialista',
+		'd19fbeb8-5aa8-4076-9b12-df50f3092cd3': 'Gerente',
+		'0364559b-e953-446c-9d8b-e74e902141cf': 'Investigador/a',
+		'df34c268-3db5-4ec1-84c5-6e0336d15873': 'Jefe de área',
+		'ea7a8c1e-267f-4d72-b81a-30ab671e040e': 'Líder técnico',
+		'dc82ce9e-748f-4757-8936-c20115991cc9': 'Otro',
+		'a0d1644c-efb5-4642-931e-a407501143ba': 'Profesional independiente',
+		'f1e13d75-7ecd-470d-a529-c9b76468a066': 'Subgerente',
+	};
+
+	// UUIDs reales de la tabla professions
+	const PROFESSIONS: Record<string, string> = {
+		'c614fc71-54d6-4eb0-a3a0-f62e2cc7be16': 'Administración de Empresas',
+		'9fb31981-a492-40c2-975a-7c343800138c': 'Ciencias de la Computación',
+		'721ca450-20c5-47ec-b8ae-3fe0bf1838cb': 'Comunicación Social',
+		'8393aafa-bf98-49f1-b9b9-760f385a75ee': 'Contaduría Pública',
+		'9699d359-0669-4cd6-9ee9-a7297157b372': 'Derecho',
+		'1a8a2166-0c20-444a-8916-1c865984f60c': 'Diseño Industrial',
+		'02c00df4-18b1-44b7-90ff-b8214e672ce0': 'Economía',
+		'ae45f91b-a74f-462d-ad8b-3ef4ad888d7f': 'Estadística',
+		'94ce7930-8b10-45ff-b108-522dfe3f49ca': 'Física',
+		'5fa844fc-4ff3-4f31-9ee6-593d6227f6f9': 'Ingeniería Civil',
+		'304f98ea-f3e0-4658-9beb-d45068839810': 'Ingeniería Electrónica',
+		'4f24dae5-31f0-4123-b325-8f41cc8250c3': 'Ingeniería Industrial',
+		'69ee0e79-82de-44b0-a356-e112a4281821': 'Ingeniería Mecánica',
+		'134e2792-64e5-45a1-9780-cb4f9132c98d': 'Ingeniería de Sistemas',
+		'c7aad62c-7568-4e11-af5c-7aec705218f7': 'Ingeniería de Software',
+		'30d8a8d5-4904-402b-81a7-a4e5495c6298': 'Ingeniería de Telecomunicaciones',
+		'0fc902a4-eeb0-40f5-bca6-94c9401b611e': 'Matemáticas',
+		'33a952eb-88bd-4634-9120-a68c39054fbd': 'Otra',
+		'd940817f-384f-4d39-9129-0c19d3f97688': 'Psicología',
+	};
+
 	async function handleSubmit() {
 		error = '';
 		saving = true;
 		try {
 			await createStudent({
-				full_name: fullName,
+				first_names: firstNames,
+				last_names: lastNames,
 				document_id: documentId || undefined,
 				birth_date: birthDate,
 				nationality_country_id: nationalityCountryId,
@@ -49,6 +96,9 @@
 				residence_city_id: residenceCityId || undefined,
 				emails: [email],
 				phones: phone ? [phone] : undefined,
+				company_id: companyId || undefined,
+				job_title_category_id: jobTitleCategoryId || undefined,
+				profession_id: professionId || undefined,
 				student_code: studentCode || undefined,
 				status,
 				cohort,
@@ -80,18 +130,33 @@
 	{/if}
 
 	<form on:submit|preventDefault={handleSubmit} class="bg-white rounded-lg shadow p-6 space-y-5">
-		<div>
-			<label for="fullName" class="block text-sm font-medium text-gray-700 mb-1">
-				Nombre completo *
-			</label>
-			<input
-				id="fullName"
-				type="text"
-				bind:value={fullName}
-				required
-				minlength="3"
-				class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-			/>
+		<div class="grid grid-cols-2 gap-4">
+			<div>
+				<label for="firstNames" class="block text-sm font-medium text-gray-700 mb-1">
+					Nombres *
+				</label>
+				<input
+					id="firstNames"
+					type="text"
+					bind:value={firstNames}
+					required
+					minlength="2"
+					class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+				/>
+			</div>
+			<div>
+				<label for="lastNames" class="block text-sm font-medium text-gray-700 mb-1">
+					Apellidos *
+				</label>
+				<input
+					id="lastNames"
+					type="text"
+					bind:value={lastNames}
+					required
+					minlength="2"
+					class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+				/>
+			</div>
 		</div>
 
 		<div class="grid grid-cols-2 gap-4">
@@ -194,6 +259,53 @@
 				/>
 				<p class="text-xs text-gray-400 mt-1">UUID hasta que exista selector de ciudades</p>
 			</div>
+		</div>
+
+		<div class="grid grid-cols-2 gap-4">
+			<div>
+				<label for="professionId" class="block text-sm font-medium text-gray-700 mb-1">
+					Profesion
+				</label>
+				<select
+					id="professionId"
+					bind:value={professionId}
+					class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+				>
+					<option value="">Seleccionar...</option>
+					{#each Object.entries(PROFESSIONS) as [id, name]}
+						<option value={id}>{name}</option>
+					{/each}
+				</select>
+			</div>
+			<div>
+				<label for="jobTitleCategoryId" class="block text-sm font-medium text-gray-700 mb-1">
+					Categoria de cargo
+				</label>
+				<select
+					id="jobTitleCategoryId"
+					bind:value={jobTitleCategoryId}
+					class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+				>
+					<option value="">Seleccionar...</option>
+					{#each Object.entries(JOB_TITLE_CATEGORIES) as [id, name]}
+						<option value={id}>{name}</option>
+					{/each}
+				</select>
+			</div>
+		</div>
+
+		<div>
+			<label for="companyId" class="block text-sm font-medium text-gray-700 mb-1">
+				Empresa
+			</label>
+			<input
+				id="companyId"
+				type="text"
+				bind:value={companyId}
+				placeholder="UUID de empresa"
+				class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+			/>
+			<p class="text-xs text-gray-400 mt-1">UUID hasta que exista selector de empresas</p>
 		</div>
 
 		<div class="grid grid-cols-2 gap-4">

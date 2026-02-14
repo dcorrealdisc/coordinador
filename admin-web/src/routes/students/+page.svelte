@@ -49,7 +49,7 @@
 	}
 
 	async function handleDelete(student: Student) {
-		if (!confirm(`Eliminar a ${student.full_name}?`)) return;
+		if (!confirm(`Eliminar a ${student.first_names + ' ' + student.last_names}?`)) return;
 		try {
 			await deleteStudent(student.id);
 			await loadStudents();
@@ -150,7 +150,7 @@
 								{student.student_code ?? '—'}
 							</td>
 							<td class="px-6 py-4">
-								<div class="font-medium text-gray-900">{student.full_name}</div>
+								<div class="font-medium text-gray-900">{student.first_names + ' ' + student.last_names}</div>
 								{#if student.document_id}
 									<div class="text-xs text-gray-500">{student.document_id}</div>
 								{/if}

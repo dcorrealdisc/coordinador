@@ -13,12 +13,12 @@ import (
 
 // StudentFilters holds the query filters for listing students.
 type StudentFilters struct {
-	Status          *string
-	Cohort          *string
+	Status             *string
+	Cohort             *string
 	ResidenceCountryID *uuid.UUID
-	Search             *string // ILIKE search on full_name
-	Limit           int
-	Offset          int
+	Search             *string // ILIKE search on first_names || last_names
+	Limit              int
+	Offset             int
 }
 
 // StudentRepository defines the data access interface for students.
@@ -43,18 +43,20 @@ func NewStudentRepository(db *pgxpool.Pool) StudentRepository {
 func (r *studentRepository) Create(ctx context.Context, student *models.Student) error {
 	query := `
 		INSERT INTO students (
-			id, full_name, document_id, birth_date, profile_photo_url,
+			id, first_names, last_names, document_id, birth_date, profile_photo_url,
 			nationality_country_id, residence_country_id, residence_city_id,
-			emails, phones, company_id, student_code, status, cohort, enrollment_date
+			emails, phones, company_id, job_title_category_id, profession_id,
+			student_code, status, cohort, enrollment_date
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
 		)
 		RETURNING created_at, updated_at
 	`
 
 	err := r.db.QueryRow(ctx, query,
 		student.ID,
-		student.FullName,
+		student.FirstNames,
+		student.LastNames,
 		student.DocumentID,
 		student.BirthDate,
 		student.ProfilePhotoURL,
@@ -64,6 +66,8 @@ func (r *studentRepository) Create(ctx context.Context, student *models.Student)
 		student.Emails,
 		student.Phones,
 		student.CompanyID,
+		student.JobTitleCategoryID,
+		student.ProfessionID,
 		student.StudentCode,
 		student.Status,
 		student.Cohort,
@@ -80,10 +84,10 @@ func (r *studentRepository) Create(ctx context.Context, student *models.Student)
 func (r *studentRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Student, error) {
 	query := `
 		SELECT
-			id, full_name, document_id, birth_date, profile_photo_url,
+			id, first_names, last_names, document_id, birth_date, profile_photo_url,
 			nationality_country_id, residence_country_id, residence_city_id,
-			emails, phones, company_id, student_code,
-			status, cohort, enrollment_date, graduation_date,
+			emails, phones, company_id, job_title_category_id, profession_id,
+			student_code, status, cohort, enrollment_date, graduation_date,
 			created_at, created_by, updated_at, updated_by, deleted_at, deleted_by
 		FROM students
 		WHERE id = $1 AND deleted_at IS NULL
@@ -92,7 +96,8 @@ func (r *studentRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 	student := &models.Student{}
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&student.ID,
-		&student.FullName,
+		&student.FirstNames,
+		&student.LastNames,
 		&student.DocumentID,
 		&student.BirthDate,
 		&student.ProfilePhotoURL,
@@ -102,6 +107,8 @@ func (r *studentRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 		&student.Emails,
 		&student.Phones,
 		&student.CompanyID,
+		&student.JobTitleCategoryID,
+		&student.ProfessionID,
 		&student.StudentCode,
 		&student.Status,
 		&student.Cohort,
@@ -128,10 +135,10 @@ func (r *studentRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 func (r *studentRepository) List(ctx context.Context, filters StudentFilters) ([]*models.Student, error) {
 	query := `
 		SELECT
-			id, full_name, document_id, birth_date, profile_photo_url,
+			id, first_names, last_names, document_id, birth_date, profile_photo_url,
 			nationality_country_id, residence_country_id, residence_city_id,
-			emails, phones, company_id, student_code,
-			status, cohort, enrollment_date, graduation_date,
+			emails, phones, company_id, job_title_category_id, profession_id,
+			student_code, status, cohort, enrollment_date, graduation_date,
 			created_at, created_by, updated_at, updated_by
 		FROM students
 		WHERE deleted_at IS NULL
@@ -159,7 +166,7 @@ func (r *studentRepository) List(ctx context.Context, filters StudentFilters) ([
 	}
 
 	if filters.Search != nil {
-		query += fmt.Sprintf(" AND full_name ILIKE $%d", argCount)
+		query += fmt.Sprintf(" AND (first_names ILIKE $%d OR last_names ILIKE $%d)", argCount, argCount)
 		args = append(args, "%"+*filters.Search+"%")
 		argCount++
 	}
@@ -189,7 +196,8 @@ func (r *studentRepository) List(ctx context.Context, filters StudentFilters) ([
 		student := &models.Student{}
 		err := rows.Scan(
 			&student.ID,
-			&student.FullName,
+			&student.FirstNames,
+			&student.LastNames,
 			&student.DocumentID,
 			&student.BirthDate,
 			&student.ProfilePhotoURL,
@@ -199,6 +207,8 @@ func (r *studentRepository) List(ctx context.Context, filters StudentFilters) ([
 			&student.Emails,
 			&student.Phones,
 			&student.CompanyID,
+			&student.JobTitleCategoryID,
+			&student.ProfessionID,
 			&student.StudentCode,
 			&student.Status,
 			&student.Cohort,
@@ -226,25 +236,29 @@ func (r *studentRepository) Update(ctx context.Context, student *models.Student)
 	query := `
 		UPDATE students
 		SET
-			full_name = $2,
-			document_id = $3,
-			profile_photo_url = $4,
-			nationality_country_id = $5,
-			residence_country_id = $6,
-			residence_city_id = $7,
-			emails = $8,
-			phones = $9,
-			company_id = $10,
-			student_code = $11,
-			status = $12,
-			updated_by = $13
+			first_names = $2,
+			last_names = $3,
+			document_id = $4,
+			profile_photo_url = $5,
+			nationality_country_id = $6,
+			residence_country_id = $7,
+			residence_city_id = $8,
+			emails = $9,
+			phones = $10,
+			company_id = $11,
+			job_title_category_id = $12,
+			profession_id = $13,
+			student_code = $14,
+			status = $15,
+			updated_by = $16
 		WHERE id = $1 AND deleted_at IS NULL
 		RETURNING updated_at
 	`
 
 	err := r.db.QueryRow(ctx, query,
 		student.ID,
-		student.FullName,
+		student.FirstNames,
+		student.LastNames,
 		student.DocumentID,
 		student.ProfilePhotoURL,
 		student.NationalityCountryID,
@@ -253,6 +267,8 @@ func (r *studentRepository) Update(ctx context.Context, student *models.Student)
 		student.Emails,
 		student.Phones,
 		student.CompanyID,
+		student.JobTitleCategoryID,
+		student.ProfessionID,
 		student.StudentCode,
 		student.Status,
 		student.UpdatedBy,
@@ -312,7 +328,7 @@ func (r *studentRepository) Count(ctx context.Context, filters StudentFilters) (
 	}
 
 	if filters.Search != nil {
-		query += fmt.Sprintf(" AND full_name ILIKE $%d", argCount)
+		query += fmt.Sprintf(" AND (first_names ILIKE $%d OR last_names ILIKE $%d)", argCount, argCount)
 		args = append(args, "%"+*filters.Search+"%")
 		argCount++
 	}
