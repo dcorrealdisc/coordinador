@@ -18,7 +18,7 @@ Los agentes son asistentes de IA especializados en dominios específicos del pro
 | Arquitecto | ✅ Activo | Decisiones arquitectónicas, ADRs, coherencia del sistema | [Ver guía](./agente-arquitecto.md) |
 | DBA | ✅ Activo | Diseño de base de datos, optimizaciones, migraciones | [Ver guía](./agente-dba.md) |
 | Go/Backend | ✅ Activo | Implementación backend, APIs, lógica de negocio | [Ver guía](./agente-go-backend.md) |
-| Svelte | 📝 Pendiente | Desarrollo frontend, componentes, UX | _Próximamente_ |
+| Svelte | ✅ Activo | Desarrollo frontend, componentes, UX | [Ver guía](./agente-svelte.md) |
 | DevOps | 📝 Pendiente | CI/CD, containerización, deployment | _Próximamente_ |
 
 ## 🔄 Flujo de Trabajo entre Agentes
