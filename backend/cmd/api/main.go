@@ -27,8 +27,9 @@ func main() {
 
 	// Dependency injection: Repository -> Service -> Handler
 	studentRepo := repositories.NewStudentRepository(db)
+	catalogRepo := repositories.NewCatalogRepository(db)
 	studentService := services.NewStudentService(studentRepo)
-	studentImportService := services.NewStudentImportService(studentService, studentRepo)
+	studentImportService := services.NewStudentImportService(studentService, studentRepo, catalogRepo)
 	studentHandler := handlers.NewStudentHandler(studentService, studentImportService)
 
 	// Fiber app

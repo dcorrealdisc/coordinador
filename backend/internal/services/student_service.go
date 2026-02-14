@@ -21,7 +21,7 @@ type StudentService interface {
 	DeleteStudent(ctx context.Context, id uuid.UUID, deletedBy *uuid.UUID) error
 }
 
-var studentCodeRegex = regexp.MustCompile(`^[0-9]{4}[12][0-9]{4}$`)
+var studentCodeRegex = regexp.MustCompile(`^[0-9]{9}$`)
 
 type studentService struct {
 	studentRepo repositories.StudentRepository
@@ -33,19 +33,22 @@ func NewStudentService(studentRepo repositories.StudentRepository) StudentServic
 }
 
 func (s *studentService) CreateStudent(ctx context.Context, req *models.CreateStudentRequest, createdBy *uuid.UUID) (*models.Student, error) {
-	// Parse and validate birth date
-	birthDate, err := time.Parse("2006-01-02", req.BirthDate)
-	if err != nil {
-		return nil, fmt.Errorf("invalid birth_date format, expected YYYY-MM-DD: %w", err)
-	}
-
-	// Validate minimum age (18 years)
-	age := time.Now().Year() - birthDate.Year()
-	if time.Now().YearDay() < birthDate.YearDay() {
-		age--
-	}
-	if age < 18 {
-		return nil, fmt.Errorf("student must be at least 18 years old")
+	// Parse and validate birth date (optional)
+	var birthDate *time.Time
+	if req.BirthDate != "" {
+		parsed, err := time.Parse("2006-01-02", req.BirthDate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid birth_date format, expected YYYY-MM-DD: %w", err)
+		}
+		// Validate minimum age (18 years)
+		age := time.Now().Year() - parsed.Year()
+		if time.Now().YearDay() < parsed.YearDay() {
+			age--
+		}
+		if age < 18 {
+			return nil, fmt.Errorf("student must be at least 18 years old")
+		}
+		birthDate = &parsed
 	}
 
 	// Parse enrollment date

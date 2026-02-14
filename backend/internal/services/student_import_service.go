@@ -21,25 +21,46 @@ type StudentImportService interface {
 }
 
 type studentImportService struct {
-	studentService StudentService
-	studentRepo    repositories.StudentRepository
+	studentService  StudentService
+	studentRepo     repositories.StudentRepository
+	catalogRepo     repositories.CatalogRepository
+	catalogResolver *CatalogResolver
 }
 
 // NewStudentImportService creates a new StudentImportService.
-func NewStudentImportService(studentService StudentService, studentRepo repositories.StudentRepository) StudentImportService {
+func NewStudentImportService(
+	studentService StudentService,
+	studentRepo repositories.StudentRepository,
+	catalogRepo repositories.CatalogRepository,
+) StudentImportService {
 	return &studentImportService{
-		studentService: studentService,
-		studentRepo:    studentRepo,
+		studentService:  studentService,
+		studentRepo:     studentRepo,
+		catalogRepo:     catalogRepo,
+		catalogResolver: NewCatalogResolver(catalogRepo),
 	}
 }
 
-// expectedHeaders defines the column order for import files.
-var expectedHeaders = []string{
-	"first_names", "last_names", "document_id", "birth_date", "gender",
-	"email", "phone",
-	"nationality_country_id", "residence_country_id", "residence_city_id",
-	"company_id", "job_title_category_id", "profession_id",
-	"student_code", "status", "cohort", "enrollment_date",
+// statusMap translates Spanish status values to English.
+var statusMap = map[string]string{
+	"activo":     "active",
+	"graduado":   "graduated",
+	"retirado":   "withdrawn",
+	"suspendido": "suspended",
+}
+
+func normalizeStatus(s string) string {
+	lower := strings.ToLower(strings.TrimSpace(s))
+	if mapped, ok := statusMap[lower]; ok {
+		return mapped
+	}
+	return s
+}
+
+// isUUID checks if a string looks like a valid UUID.
+func isUUID(s string) bool {
+	_, err := uuid.Parse(s)
+	return err == nil
 }
 
 func (s *studentImportService) ImportFromFile(ctx context.Context, fileData []byte, format string, createdBy *uuid.UUID) (*models.ImportResult, error) {
@@ -141,16 +162,21 @@ func (s *studentImportService) validateAndImportRow(
 	gender := strings.TrimSpace(getField(row, headerMap, "gender"))
 	email := strings.TrimSpace(getField(row, headerMap, "email"))
 	phone := strings.TrimSpace(getField(row, headerMap, "phone"))
-	nationalityCountryID := strings.TrimSpace(getField(row, headerMap, "nationality_country_id"))
-	residenceCountryID := strings.TrimSpace(getField(row, headerMap, "residence_country_id"))
-	residenceCityID := strings.TrimSpace(getField(row, headerMap, "residence_city_id"))
-	companyID := strings.TrimSpace(getField(row, headerMap, "company_id"))
-	jobTitleCategoryID := strings.TrimSpace(getField(row, headerMap, "job_title_category_id"))
-	professionID := strings.TrimSpace(getField(row, headerMap, "profession_id"))
+	nationalityRaw := strings.TrimSpace(getField(row, headerMap, "nationality_country_id"))
+	residenceRaw := strings.TrimSpace(getField(row, headerMap, "residence_country_id"))
+	residenceCityRaw := strings.TrimSpace(getField(row, headerMap, "residence_city_id"))
+	companyRaw := strings.TrimSpace(getField(row, headerMap, "company_id"))
+	jobTitleRaw := strings.TrimSpace(getField(row, headerMap, "job_title_category_id"))
+	professionRaw := strings.TrimSpace(getField(row, headerMap, "profession_id"))
 	studentCode := strings.TrimSpace(getField(row, headerMap, "student_code"))
-	status := strings.TrimSpace(getField(row, headerMap, "status"))
+	status := normalizeStatus(getField(row, headerMap, "status"))
 	cohort := strings.TrimSpace(getField(row, headerMap, "cohort"))
 	enrollmentDate := strings.TrimSpace(getField(row, headerMap, "enrollment_date"))
+
+	// University columns (optional)
+	universityName := strings.TrimSpace(getField(row, headerMap, "universidad"))
+	universityCityName := strings.TrimSpace(getField(row, headerMap, "universidad-ciudad"))
+	universityCountryName := strings.TrimSpace(getField(row, headerMap, "universidad-pais"))
 
 	// Validate required fields
 	if firstNames == "" {
@@ -159,23 +185,13 @@ func (s *studentImportService) validateAndImportRow(
 	if lastNames == "" {
 		addError("last_names", "", "required field is empty")
 	}
-	if birthDate == "" {
-		addError("birth_date", "", "required field is empty")
+	if email != "" {
+		if _, err := mail.ParseAddress(email); err != nil {
+			addError("email", email, "invalid email format")
+		}
 	}
-	if email == "" {
-		addError("email", "", "required field is empty")
-	} else if _, err := mail.ParseAddress(email); err != nil {
-		addError("email", email, "invalid email format")
-	}
-	if nationalityCountryID == "" {
+	if nationalityRaw == "" {
 		addError("nationality_country_id", "", "required field is empty")
-	} else if _, err := uuid.Parse(nationalityCountryID); err != nil {
-		addError("nationality_country_id", nationalityCountryID, "invalid UUID format")
-	}
-	if residenceCountryID == "" {
-		addError("residence_country_id", "", "required field is empty")
-	} else if _, err := uuid.Parse(residenceCountryID); err != nil {
-		addError("residence_country_id", residenceCountryID, "invalid UUID format")
 	}
 	if status == "" {
 		addError("status", "", "required field is empty")
@@ -213,9 +229,94 @@ func (s *studentImportService) validateAndImportRow(
 		}
 	}
 
-	// If there are validation errors, don't attempt to insert
+	// If there are validation errors, don't attempt to resolve catalogs or insert
 	if len(errors) > 0 {
 		return errors
+	}
+
+	// --- Resolve names to UUIDs via CatalogResolver ---
+
+	// Nationality country (required)
+	var nationalityCountryUUID string
+	if isUUID(nationalityRaw) {
+		nationalityCountryUUID = nationalityRaw
+	} else {
+		id, err := s.catalogResolver.ResolveCountry(ctx, nationalityRaw)
+		if err != nil {
+			addError("nationality_country_id", nationalityRaw, err.Error())
+			return errors
+		}
+		nationalityCountryUUID = id.String()
+	}
+
+	// Residence country: use nationality if not provided
+	var residenceCountryUUID string
+	if residenceRaw == "" {
+		residenceCountryUUID = nationalityCountryUUID
+	} else if isUUID(residenceRaw) {
+		residenceCountryUUID = residenceRaw
+	} else {
+		id, err := s.catalogResolver.ResolveCountry(ctx, residenceRaw)
+		if err != nil {
+			addError("residence_country_id", residenceRaw, err.Error())
+			return errors
+		}
+		residenceCountryUUID = id.String()
+	}
+
+	// Residence city (optional)
+	var residenceCityUUID *string
+	if residenceCityRaw != "" {
+		if isUUID(residenceCityRaw) {
+			residenceCityUUID = &residenceCityRaw
+		} else {
+			resCountryID, _ := uuid.Parse(residenceCountryUUID)
+			id, err := s.catalogResolver.ResolveCity(ctx, residenceCityRaw, resCountryID)
+			if err != nil {
+				addError("residence_city_id", residenceCityRaw, err.Error())
+				return errors
+			}
+			if id != uuid.Nil {
+				s := id.String()
+				residenceCityUUID = &s
+			}
+		}
+	}
+
+	// Profession (optional)
+	var professionUUID *string
+	if professionRaw != "" {
+		if isUUID(professionRaw) {
+			professionUUID = &professionRaw
+		} else {
+			id, err := s.catalogResolver.ResolveProfession(ctx, professionRaw)
+			if err != nil {
+				addError("profession_id", professionRaw, err.Error())
+				return errors
+			}
+			if id != uuid.Nil {
+				s := id.String()
+				professionUUID = &s
+			}
+		}
+	}
+
+	// Job title category (optional)
+	var jobTitleUUID *string
+	if jobTitleRaw != "" {
+		if isUUID(jobTitleRaw) {
+			jobTitleUUID = &jobTitleRaw
+		} else {
+			id, err := s.catalogResolver.ResolveJobTitleCategory(ctx, jobTitleRaw)
+			if err != nil {
+				addError("job_title_category_id", jobTitleRaw, err.Error())
+				return errors
+			}
+			if id != uuid.Nil {
+				s := id.String()
+				jobTitleUUID = &s
+			}
+		}
 	}
 
 	// Build CreateStudentRequest
@@ -223,9 +324,9 @@ func (s *studentImportService) validateAndImportRow(
 		FirstNames:           firstNames,
 		LastNames:            lastNames,
 		BirthDate:            birthDate,
-		NationalityCountryID: nationalityCountryID,
-		ResidenceCountryID:   residenceCountryID,
-		Emails:               []string{email},
+		NationalityCountryID: nationalityCountryUUID,
+		ResidenceCountryID:   residenceCountryUUID,
+		ResidenceCityID:      residenceCityUUID,
 		Status:               status,
 		Cohort:               cohort,
 		EnrollmentDate:       enrollmentDate,
@@ -237,30 +338,57 @@ func (s *studentImportService) validateAndImportRow(
 	if gender != "" {
 		req.Gender = &gender
 	}
+	if email != "" {
+		req.Emails = []string{email}
+	}
 	if phone != "" {
 		req.Phones = []string{phone}
 	}
-	if residenceCityID != "" {
-		req.ResidenceCityID = &residenceCityID
+	if companyRaw != "" && isUUID(companyRaw) {
+		req.CompanyID = &companyRaw
 	}
-	if companyID != "" {
-		req.CompanyID = &companyID
+	if jobTitleUUID != nil {
+		req.JobTitleCategoryID = jobTitleUUID
 	}
-	if jobTitleCategoryID != "" {
-		req.JobTitleCategoryID = &jobTitleCategoryID
-	}
-	if professionID != "" {
-		req.ProfessionID = &professionID
+	if professionUUID != nil {
+		req.ProfessionID = professionUUID
 	}
 	if studentCode != "" {
 		req.StudentCode = &studentCode
 	}
 
-	// Use existing CreateStudent which does full validation + insert
-	_, err := s.studentService.CreateStudent(ctx, req, createdBy)
+	// Create the student
+	student, err := s.studentService.CreateStudent(ctx, req, createdBy)
 	if err != nil {
 		addError("_row", "", err.Error())
 		return errors
+	}
+
+	// --- Create student_university relationship ---
+	if universityName != "" {
+		// Resolve university country (default to nationality if not provided)
+		uniCountryID, _ := uuid.Parse(nationalityCountryUUID)
+		if universityCountryName != "" {
+			resolved, err := s.catalogResolver.ResolveCountry(ctx, universityCountryName)
+			if err == nil && resolved != uuid.Nil {
+				uniCountryID = resolved
+			}
+		}
+
+		// Resolve university city (optional)
+		var uniCityID *uuid.UUID
+		if universityCityName != "" {
+			resolved, err := s.catalogResolver.ResolveCity(ctx, universityCityName, uniCountryID)
+			if err == nil && resolved != uuid.Nil {
+				uniCityID = &resolved
+			}
+		}
+
+		// Resolve university
+		uniID, err := s.catalogResolver.ResolveUniversity(ctx, universityName, uniCityID, uniCountryID)
+		if err == nil && uniID != uuid.Nil {
+			_ = s.catalogRepo.CreateStudentUniversity(ctx, student.ID, uniID)
+		}
 	}
 
 	// Track as seen for intra-file duplicate detection
@@ -301,9 +429,9 @@ func mapHeaders(headerRow []string) (map[string]int, error) {
 		m[normalized] = i
 	}
 
-	// Check that at least the required headers are present
-	required := []string{"first_names", "last_names", "birth_date", "email",
-		"nationality_country_id", "residence_country_id", "status", "cohort", "enrollment_date"}
+	// Required headers — residence_country_id is no longer required since we fall back to nationality
+	required := []string{"first_names", "last_names",
+		"nationality_country_id", "status", "cohort", "enrollment_date"}
 	var missing []string
 	for _, r := range required {
 		if _, ok := m[r]; !ok {
