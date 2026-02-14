@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"fmt"
+	"io"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -14,12 +18,16 @@ import (
 
 // StudentHandler handles HTTP requests for student endpoints.
 type StudentHandler struct {
-	studentService services.StudentService
+	studentService       services.StudentService
+	studentImportService services.StudentImportService
 }
 
 // NewStudentHandler creates a new StudentHandler.
-func NewStudentHandler(studentService services.StudentService) *StudentHandler {
-	return &StudentHandler{studentService: studentService}
+func NewStudentHandler(studentService services.StudentService, studentImportService services.StudentImportService) *StudentHandler {
+	return &StudentHandler{
+		studentService:       studentService,
+		studentImportService: studentImportService,
+	}
 }
 
 // RegisterRoutes registers all student routes on the given router group.
@@ -27,6 +35,7 @@ func (h *StudentHandler) RegisterRoutes(router fiber.Router) {
 	students := router.Group("/students")
 
 	students.Post("/", h.CreateStudent)
+	students.Post("/import", h.ImportStudents)
 	students.Get("/", h.ListStudents)
 	students.Get("/:id", h.GetStudent)
 	students.Put("/:id", h.UpdateStudent)
@@ -137,4 +146,45 @@ func (h *StudentHandler) DeleteStudent(c *fiber.Ctx) error {
 	}
 
 	return shared.SuccessResponse(c, fiber.StatusOK, "Student deleted successfully", nil)
+}
+
+// ImportStudents handles POST /api/v1/students/import
+func (h *StudentHandler) ImportStudents(c *fiber.Ctx) error {
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		return shared.ErrorResponse(c, fiber.StatusBadRequest, "File is required", fmt.Errorf("missing 'file' field in multipart form"))
+	}
+
+	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+	var format string
+	switch ext {
+	case ".csv":
+		format = "csv"
+	case ".xlsx":
+		format = "xlsx"
+	default:
+		return shared.ErrorResponse(c, fiber.StatusBadRequest, "Unsupported file format", fmt.Errorf("expected .csv or .xlsx, got %s", ext))
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return shared.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to open file", err)
+	}
+	defer file.Close()
+
+	fileData, err := io.ReadAll(file)
+	if err != nil {
+		return shared.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to read file", err)
+	}
+
+	// TODO: Get authenticated user from context once auth is implemented
+	var createdBy *uuid.UUID
+
+	result, err := h.studentImportService.ImportFromFile(c.Context(), fileData, format, createdBy)
+	if err != nil {
+		return shared.ErrorResponse(c, fiber.StatusBadRequest, "Import failed", err)
+	}
+
+	message := fmt.Sprintf("Import completed: %d created, %d errors", result.Created, len(result.Errors))
+	return shared.SuccessResponse(c, fiber.StatusOK, message, result)
 }

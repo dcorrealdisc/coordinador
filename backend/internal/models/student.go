@@ -93,3 +93,18 @@ type UpdateStudentRequest struct {
 	StudentCode        *string  `json:"student_code" validate:"omitempty,len=9"`
 	Status             *string  `json:"status" validate:"omitempty,oneof=active graduated withdrawn suspended"`
 }
+
+// ImportRowError describes a validation or insertion error for a single row.
+type ImportRowError struct {
+	Row     int    `json:"row"`
+	Field   string `json:"field"`
+	Value   string `json:"value"`
+	Message string `json:"message"`
+}
+
+// ImportResult holds the outcome of a bulk student import.
+type ImportResult struct {
+	TotalRows int              `json:"total_rows"`
+	Created   int              `json:"created"`
+	Errors    []ImportRowError `json:"errors"`
+}

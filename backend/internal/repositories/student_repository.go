@@ -29,6 +29,8 @@ type StudentRepository interface {
 	Update(ctx context.Context, student *models.Student) error
 	Delete(ctx context.Context, id uuid.UUID, deletedBy *uuid.UUID) error
 	Count(ctx context.Context, filters StudentFilters) (int, error)
+	ExistingDocumentIDs(ctx context.Context, documentIDs []string) (map[string]bool, error)
+	ExistingEmails(ctx context.Context, emails []string) (map[string]bool, error)
 }
 
 type studentRepository struct {
@@ -345,4 +347,50 @@ func (r *studentRepository) Count(ctx context.Context, filters StudentFilters) (
 	}
 
 	return count, nil
+}
+
+func (r *studentRepository) ExistingDocumentIDs(ctx context.Context, documentIDs []string) (map[string]bool, error) {
+	if len(documentIDs) == 0 {
+		return map[string]bool{}, nil
+	}
+
+	query := "SELECT document_id FROM students WHERE deleted_at IS NULL AND document_id = ANY($1)"
+	rows, err := r.db.Query(ctx, query, documentIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query existing document_ids: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[string]bool)
+	for rows.Next() {
+		var docID string
+		if err := rows.Scan(&docID); err != nil {
+			return nil, err
+		}
+		result[docID] = true
+	}
+	return result, rows.Err()
+}
+
+func (r *studentRepository) ExistingEmails(ctx context.Context, emails []string) (map[string]bool, error) {
+	if len(emails) == 0 {
+		return map[string]bool{}, nil
+	}
+
+	query := "SELECT UNNEST(emails) AS email FROM students WHERE deleted_at IS NULL AND emails && $1"
+	rows, err := r.db.Query(ctx, query, emails)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query existing emails: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[string]bool)
+	for rows.Next() {
+		var email string
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		result[email] = true
+	}
+	return result, rows.Err()
 }
