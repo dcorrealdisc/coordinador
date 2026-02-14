@@ -24,6 +24,7 @@ type Student struct {
 	DocumentID      *string       `json:"document_id,omitempty" db:"document_id"`
 	BirthDate       time.Time     `json:"birth_date" db:"birth_date"`
 	ProfilePhotoURL *string       `json:"profile_photo_url,omitempty" db:"profile_photo_url"`
+	Gender          *string       `json:"gender,omitempty" db:"gender"`
 
 	// Ubicación
 	NationalityCountryID uuid.UUID  `json:"nationality_country_id" db:"nationality_country_id"`
@@ -62,6 +63,7 @@ type CreateStudentRequest struct {
 	DocumentID           *string  `json:"document_id" validate:"omitempty,max=50"`
 	BirthDate            string   `json:"birth_date" validate:"required"`
 	ProfilePhotoURL      *string  `json:"profile_photo_url" validate:"omitempty,url"`
+	Gender               *string  `json:"gender" validate:"omitempty,oneof=M F"`
 	NationalityCountryID string   `json:"nationality_country_id" validate:"required,uuid"`
 	ResidenceCountryID   string   `json:"residence_country_id" validate:"required,uuid"`
 	ResidenceCityID      *string  `json:"residence_city_id" validate:"omitempty,uuid"`
@@ -82,6 +84,7 @@ type UpdateStudentRequest struct {
 	LastNames          *string  `json:"last_names" validate:"omitempty,min=2,max=150"`
 	DocumentID         *string  `json:"document_id" validate:"omitempty,max=50"`
 	ProfilePhotoURL    *string  `json:"profile_photo_url" validate:"omitempty,url"`
+	Gender             *string  `json:"gender" validate:"omitempty,oneof=M F"`
 	Emails             []string `json:"emails" validate:"omitempty,min=1,dive,email"`
 	Phones             []string `json:"phones" validate:"omitempty"`
 	CompanyID          *string  `json:"company_id" validate:"omitempty,uuid"`

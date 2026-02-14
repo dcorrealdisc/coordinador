@@ -19,6 +19,7 @@ export interface Student {
 	document_id?: string;
 	birth_date: string;
 	profile_photo_url?: string;
+	gender?: 'M' | 'F';
 	nationality_country_id: string;
 	residence_country_id: string;
 	residence_city_id?: string;
@@ -44,6 +45,7 @@ export interface CreateStudentRequest {
 	document_id?: string;
 	birth_date: string;
 	profile_photo_url?: string;
+	gender?: 'M' | 'F';
 	nationality_country_id: string;
 	residence_country_id: string;
 	residence_city_id?: string;
@@ -63,6 +65,7 @@ export interface UpdateStudentRequest {
 	last_names?: string;
 	document_id?: string;
 	profile_photo_url?: string;
+	gender?: 'M' | 'F';
 	emails?: string[];
 	phones?: string[];
 	company_id?: string;

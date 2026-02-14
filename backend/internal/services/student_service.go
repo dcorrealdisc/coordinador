@@ -117,6 +117,7 @@ func (s *studentService) CreateStudent(ctx context.Context, req *models.CreateSt
 		DocumentID:           req.DocumentID,
 		BirthDate:            birthDate,
 		ProfilePhotoURL:      req.ProfilePhotoURL,
+		Gender:               req.Gender,
 		NationalityCountryID: nationalityCountryID,
 		ResidenceCountryID:   residenceCountryID,
 		ResidenceCityID:      residenceCityID,
@@ -175,6 +176,9 @@ func (s *studentService) UpdateStudent(ctx context.Context, id uuid.UUID, req *m
 	}
 	if req.ProfilePhotoURL != nil {
 		student.ProfilePhotoURL = req.ProfilePhotoURL
+	}
+	if req.Gender != nil {
+		student.Gender = req.Gender
 	}
 	if req.Emails != nil {
 		if len(req.Emails) == 0 {

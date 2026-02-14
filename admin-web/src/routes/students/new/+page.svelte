@@ -6,6 +6,7 @@
 	let lastNames = '';
 	let documentId = '';
 	let birthDate = '';
+	let gender = '';
 	let email = '';
 	let phone = '';
 	let nationalityCountryId = '';
@@ -91,6 +92,7 @@
 				last_names: lastNames,
 				document_id: documentId || undefined,
 				birth_date: birthDate,
+				gender: gender ? gender as 'M' | 'F' : undefined,
 				nationality_country_id: nationalityCountryId,
 				residence_country_id: residenceCountryId,
 				residence_city_id: residenceCityId || undefined,
@@ -159,7 +161,7 @@
 			</div>
 		</div>
 
-		<div class="grid grid-cols-2 gap-4">
+		<div class="grid grid-cols-3 gap-4">
 			<div>
 				<label for="documentId" class="block text-sm font-medium text-gray-700 mb-1">
 					Documento de identidad
@@ -183,6 +185,20 @@
 					required
 					class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
 				/>
+			</div>
+			<div>
+				<label for="gender" class="block text-sm font-medium text-gray-700 mb-1">
+					Genero
+				</label>
+				<select
+					id="gender"
+					bind:value={gender}
+					class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+				>
+					<option value="">Seleccionar...</option>
+					<option value="M">Masculino</option>
+					<option value="F">Femenino</option>
+				</select>
 			</div>
 		</div>
 
