@@ -54,20 +54,26 @@ func (s *studentService) CreateStudent(ctx context.Context, req *models.CreateSt
 		return nil, fmt.Errorf("invalid enrollment_date format, expected YYYY-MM-DD: %w", err)
 	}
 
-	// Parse country origin ID (required)
-	countryOriginID, err := uuid.Parse(req.CountryOriginID)
+	// Parse nationality country ID (required)
+	nationalityCountryID, err := uuid.Parse(req.NationalityCountryID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid country_origin_id: %w", err)
+		return nil, fmt.Errorf("invalid nationality_country_id: %w", err)
+	}
+
+	// Parse residence country ID (required)
+	residenceCountryID, err := uuid.Parse(req.ResidenceCountryID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid residence_country_id: %w", err)
 	}
 
 	// Parse optional UUIDs
-	var cityOriginID *uuid.UUID
-	if req.CityOriginID != nil {
-		parsed, err := uuid.Parse(*req.CityOriginID)
+	var residenceCityID *uuid.UUID
+	if req.ResidenceCityID != nil {
+		parsed, err := uuid.Parse(*req.ResidenceCityID)
 		if err != nil {
-			return nil, fmt.Errorf("invalid city_origin_id: %w", err)
+			return nil, fmt.Errorf("invalid residence_city_id: %w", err)
 		}
-		cityOriginID = &parsed
+		residenceCityID = &parsed
 	}
 
 	var companyID *uuid.UUID
@@ -87,21 +93,22 @@ func (s *studentService) CreateStudent(ctx context.Context, req *models.CreateSt
 	}
 
 	student := &models.Student{
-		ID:              uuid.New(),
-		FullName:        req.FullName,
-		DocumentID:      req.DocumentID,
-		BirthDate:       birthDate,
-		ProfilePhotoURL: req.ProfilePhotoURL,
-		CityOriginID:    cityOriginID,
-		CountryOriginID: countryOriginID,
-		Emails:          req.Emails,
-		Phones:          req.Phones,
-		CompanyID:       companyID,
-		StudentCode:     req.StudentCode,
-		Status:          models.StudentStatus(req.Status),
-		Cohort:          req.Cohort,
-		EnrollmentDate:  enrollmentDate,
-		CreatedBy:       createdBy,
+		ID:                   uuid.New(),
+		FullName:             req.FullName,
+		DocumentID:           req.DocumentID,
+		BirthDate:            birthDate,
+		ProfilePhotoURL:      req.ProfilePhotoURL,
+		NationalityCountryID: nationalityCountryID,
+		ResidenceCountryID:   residenceCountryID,
+		ResidenceCityID:      residenceCityID,
+		Emails:               req.Emails,
+		Phones:               req.Phones,
+		CompanyID:            companyID,
+		StudentCode:          req.StudentCode,
+		Status:               models.StudentStatus(req.Status),
+		Cohort:               req.Cohort,
+		EnrollmentDate:       enrollmentDate,
+		CreatedBy:            createdBy,
 	}
 
 	if err := s.studentRepo.Create(ctx, student); err != nil {

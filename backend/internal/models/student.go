@@ -24,9 +24,10 @@ type Student struct {
 	BirthDate       time.Time     `json:"birth_date" db:"birth_date"`
 	ProfilePhotoURL *string       `json:"profile_photo_url,omitempty" db:"profile_photo_url"`
 
-	// Procedencia
-	CityOriginID    *uuid.UUID `json:"city_origin_id,omitempty" db:"city_origin_id"`
-	CountryOriginID uuid.UUID  `json:"country_origin_id" db:"country_origin_id"`
+	// Ubicación
+	NationalityCountryID uuid.UUID  `json:"nationality_country_id" db:"nationality_country_id"`
+	ResidenceCountryID   uuid.UUID  `json:"residence_country_id" db:"residence_country_id"`
+	ResidenceCityID      *uuid.UUID `json:"residence_city_id,omitempty" db:"residence_city_id"`
 
 	// Contacto (PostgreSQL arrays)
 	Emails []string `json:"emails" db:"emails"`
@@ -57,8 +58,9 @@ type CreateStudentRequest struct {
 	DocumentID      *string  `json:"document_id" validate:"omitempty,max=50"`
 	BirthDate       string   `json:"birth_date" validate:"required"`
 	ProfilePhotoURL *string  `json:"profile_photo_url" validate:"omitempty,url"`
-	CityOriginID    *string  `json:"city_origin_id" validate:"omitempty,uuid"`
-	CountryOriginID string   `json:"country_origin_id" validate:"required,uuid"`
+	NationalityCountryID string  `json:"nationality_country_id" validate:"required,uuid"`
+	ResidenceCountryID   string  `json:"residence_country_id" validate:"required,uuid"`
+	ResidenceCityID      *string `json:"residence_city_id" validate:"omitempty,uuid"`
 	Emails          []string `json:"emails" validate:"required,min=1,dive,email"`
 	Phones          []string `json:"phones" validate:"omitempty,dive,max=50"`
 	CompanyID       *string  `json:"company_id" validate:"omitempty,uuid"`

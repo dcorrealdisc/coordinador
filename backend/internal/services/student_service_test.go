@@ -18,28 +18,30 @@ import (
 
 func validCreateRequest() *models.CreateStudentRequest {
 	return &models.CreateStudentRequest{
-		FullName:        "Juan Carlos Perez",
-		BirthDate:       "1995-03-15",
-		CountryOriginID: uuid.New().String(),
-		Emails:          []string{"juan@test.com"},
-		Status:          "active",
-		Cohort:          "2024-1",
-		EnrollmentDate:  "2024-01-15",
+		FullName:             "Juan Carlos Perez",
+		BirthDate:            "1995-03-15",
+		NationalityCountryID: uuid.New().String(),
+		ResidenceCountryID:   uuid.New().String(),
+		Emails:               []string{"juan@test.com"},
+		Status:               "active",
+		Cohort:               "2024-1",
+		EnrollmentDate:       "2024-01-15",
 	}
 }
 
 func sampleStudent() *models.Student {
 	return &models.Student{
-		ID:              uuid.New(),
-		FullName:        "Juan Carlos Perez",
-		BirthDate:       time.Date(1995, 3, 15, 0, 0, 0, 0, time.UTC),
-		CountryOriginID: uuid.New(),
-		Emails:          []string{"juan@test.com"},
-		Status:          models.StudentStatusActive,
-		Cohort:          "2024-1",
-		EnrollmentDate:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		ID:                   uuid.New(),
+		FullName:             "Juan Carlos Perez",
+		BirthDate:            time.Date(1995, 3, 15, 0, 0, 0, 0, time.UTC),
+		NationalityCountryID: uuid.New(),
+		ResidenceCountryID:   uuid.New(),
+		Emails:               []string{"juan@test.com"},
+		Status:               models.StudentStatusActive,
+		Cohort:               "2024-1",
+		EnrollmentDate:       time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
 	}
 }
 
@@ -107,33 +109,47 @@ func TestCreateStudent_InvalidEnrollmentDateFormat(t *testing.T) {
 	assert.Contains(t, err.Error(), "enrollment_date")
 }
 
-func TestCreateStudent_InvalidCountryOriginID(t *testing.T) {
+func TestCreateStudent_InvalidNationalityCountryID(t *testing.T) {
 	mockRepo := new(mocks.StudentRepository)
 	service := services.NewStudentService(mockRepo)
 
 	req := validCreateRequest()
-	req.CountryOriginID = "not-a-uuid"
+	req.NationalityCountryID = "not-a-uuid"
 
 	student, err := service.CreateStudent(context.Background(), req, nil)
 
 	assert.Error(t, err)
 	assert.Nil(t, student)
-	assert.Contains(t, err.Error(), "country_origin_id")
+	assert.Contains(t, err.Error(), "nationality_country_id")
 }
 
-func TestCreateStudent_InvalidCityOriginID(t *testing.T) {
+func TestCreateStudent_InvalidResidenceCountryID(t *testing.T) {
+	mockRepo := new(mocks.StudentRepository)
+	service := services.NewStudentService(mockRepo)
+
+	req := validCreateRequest()
+	req.ResidenceCountryID = "not-a-uuid"
+
+	student, err := service.CreateStudent(context.Background(), req, nil)
+
+	assert.Error(t, err)
+	assert.Nil(t, student)
+	assert.Contains(t, err.Error(), "residence_country_id")
+}
+
+func TestCreateStudent_InvalidResidenceCityID(t *testing.T) {
 	mockRepo := new(mocks.StudentRepository)
 	service := services.NewStudentService(mockRepo)
 
 	req := validCreateRequest()
 	badID := "not-a-uuid"
-	req.CityOriginID = &badID
+	req.ResidenceCityID = &badID
 
 	student, err := service.CreateStudent(context.Background(), req, nil)
 
 	assert.Error(t, err)
 	assert.Nil(t, student)
-	assert.Contains(t, err.Error(), "city_origin_id")
+	assert.Contains(t, err.Error(), "residence_city_id")
 }
 
 func TestCreateStudent_InvalidCompanyID(t *testing.T) {

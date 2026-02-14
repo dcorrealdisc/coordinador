@@ -79,10 +79,10 @@ func (h *StudentHandler) ListStudents(c *fiber.Ctx) error {
 	if search := c.Query("search"); search != "" {
 		filters.Search = &search
 	}
-	if countryID := c.Query("country_id"); countryID != "" {
+	if countryID := c.Query("residence_country_id"); countryID != "" {
 		parsed, err := uuid.Parse(countryID)
 		if err == nil {
-			filters.CountryOriginID = &parsed
+			filters.ResidenceCountryID = &parsed
 		}
 	}
 

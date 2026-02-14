@@ -15,8 +15,8 @@ import (
 type StudentFilters struct {
 	Status          *string
 	Cohort          *string
-	CountryOriginID *uuid.UUID
-	Search          *string // ILIKE search on full_name
+	ResidenceCountryID *uuid.UUID
+	Search             *string // ILIKE search on full_name
 	Limit           int
 	Offset          int
 }
@@ -44,10 +44,10 @@ func (r *studentRepository) Create(ctx context.Context, student *models.Student)
 	query := `
 		INSERT INTO students (
 			id, full_name, document_id, birth_date, profile_photo_url,
-			city_origin_id, country_origin_id, emails, phones,
-			company_id, student_code, status, cohort, enrollment_date
+			nationality_country_id, residence_country_id, residence_city_id,
+			emails, phones, company_id, student_code, status, cohort, enrollment_date
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
 		)
 		RETURNING created_at, updated_at
 	`
@@ -58,8 +58,9 @@ func (r *studentRepository) Create(ctx context.Context, student *models.Student)
 		student.DocumentID,
 		student.BirthDate,
 		student.ProfilePhotoURL,
-		student.CityOriginID,
-		student.CountryOriginID,
+		student.NationalityCountryID,
+		student.ResidenceCountryID,
+		student.ResidenceCityID,
 		student.Emails,
 		student.Phones,
 		student.CompanyID,
@@ -80,8 +81,9 @@ func (r *studentRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 	query := `
 		SELECT
 			id, full_name, document_id, birth_date, profile_photo_url,
-			city_origin_id, country_origin_id, emails, phones,
-			company_id, student_code, status, cohort, enrollment_date, graduation_date,
+			nationality_country_id, residence_country_id, residence_city_id,
+			emails, phones, company_id, student_code,
+			status, cohort, enrollment_date, graduation_date,
 			created_at, created_by, updated_at, updated_by, deleted_at, deleted_by
 		FROM students
 		WHERE id = $1 AND deleted_at IS NULL
@@ -94,8 +96,9 @@ func (r *studentRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 		&student.DocumentID,
 		&student.BirthDate,
 		&student.ProfilePhotoURL,
-		&student.CityOriginID,
-		&student.CountryOriginID,
+		&student.NationalityCountryID,
+		&student.ResidenceCountryID,
+		&student.ResidenceCityID,
 		&student.Emails,
 		&student.Phones,
 		&student.CompanyID,
@@ -126,8 +129,9 @@ func (r *studentRepository) List(ctx context.Context, filters StudentFilters) ([
 	query := `
 		SELECT
 			id, full_name, document_id, birth_date, profile_photo_url,
-			city_origin_id, country_origin_id, emails, phones,
-			company_id, student_code, status, cohort, enrollment_date, graduation_date,
+			nationality_country_id, residence_country_id, residence_city_id,
+			emails, phones, company_id, student_code,
+			status, cohort, enrollment_date, graduation_date,
 			created_at, created_by, updated_at, updated_by
 		FROM students
 		WHERE deleted_at IS NULL
@@ -148,9 +152,9 @@ func (r *studentRepository) List(ctx context.Context, filters StudentFilters) ([
 		argCount++
 	}
 
-	if filters.CountryOriginID != nil {
-		query += fmt.Sprintf(" AND country_origin_id = $%d", argCount)
-		args = append(args, *filters.CountryOriginID)
+	if filters.ResidenceCountryID != nil {
+		query += fmt.Sprintf(" AND residence_country_id = $%d", argCount)
+		args = append(args, *filters.ResidenceCountryID)
 		argCount++
 	}
 
@@ -189,8 +193,9 @@ func (r *studentRepository) List(ctx context.Context, filters StudentFilters) ([
 			&student.DocumentID,
 			&student.BirthDate,
 			&student.ProfilePhotoURL,
-			&student.CityOriginID,
-			&student.CountryOriginID,
+			&student.NationalityCountryID,
+			&student.ResidenceCountryID,
+			&student.ResidenceCityID,
 			&student.Emails,
 			&student.Phones,
 			&student.CompanyID,
@@ -224,12 +229,15 @@ func (r *studentRepository) Update(ctx context.Context, student *models.Student)
 			full_name = $2,
 			document_id = $3,
 			profile_photo_url = $4,
-			emails = $5,
-			phones = $6,
-			company_id = $7,
-			student_code = $8,
-			status = $9,
-			updated_by = $10
+			nationality_country_id = $5,
+			residence_country_id = $6,
+			residence_city_id = $7,
+			emails = $8,
+			phones = $9,
+			company_id = $10,
+			student_code = $11,
+			status = $12,
+			updated_by = $13
 		WHERE id = $1 AND deleted_at IS NULL
 		RETURNING updated_at
 	`
@@ -239,6 +247,9 @@ func (r *studentRepository) Update(ctx context.Context, student *models.Student)
 		student.FullName,
 		student.DocumentID,
 		student.ProfilePhotoURL,
+		student.NationalityCountryID,
+		student.ResidenceCountryID,
+		student.ResidenceCityID,
 		student.Emails,
 		student.Phones,
 		student.CompanyID,
@@ -294,9 +305,9 @@ func (r *studentRepository) Count(ctx context.Context, filters StudentFilters) (
 		argCount++
 	}
 
-	if filters.CountryOriginID != nil {
-		query += fmt.Sprintf(" AND country_origin_id = $%d", argCount)
-		args = append(args, *filters.CountryOriginID)
+	if filters.ResidenceCountryID != nil {
+		query += fmt.Sprintf(" AND residence_country_id = $%d", argCount)
+		args = append(args, *filters.ResidenceCountryID)
 		argCount++
 	}
 

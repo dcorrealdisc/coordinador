@@ -12,7 +12,7 @@ export async function getStudents(filters?: StudentFilters): Promise<PaginatedDa
 	if (filters?.status) params.set('status', filters.status);
 	if (filters?.cohort) params.set('cohort', filters.cohort);
 	if (filters?.search) params.set('search', filters.search);
-	if (filters?.country_id) params.set('country_id', filters.country_id);
+	if (filters?.residence_country_id) params.set('residence_country_id', filters.residence_country_id);
 	params.set('limit', String(filters?.limit ?? 20));
 	params.set('offset', String(filters?.offset ?? 0));
 
